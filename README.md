@@ -1,3 +1,16 @@
+<<<<<<< HEAD
+<div align="center">
+
+# LEGATO Reproduction – Decoder Only
+
+[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3120/)
+[![PyTorch 2.4.1](https://img.shields.io/badge/PyTorch-2.4.1-%23EE4C2C.svg?logo=pytorch)](https://pytorch.org/)
+[![Transformers](https://img.shields.io/badge/🤗_Transformers-4.46.3-yellow)](https://huggingface.co/docs/transformers/index)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/carus7749/LEGATO-reproduce-decoder-only?style=social)](https://github.com/carus7749/LEGATO-reproduce-decoder-only/stargazers)
+[![GitHub last commit](https://img.shields.io/github/last-commit/carus7749/LEGATO-reproduce-decoder-only)](https://github.com/carus7749/LEGATO-reproduce-decoder-only/commits/main)
+
+</div>
 # LEGATO 复现使用指南（简化推理版）
 
 **版本**：v1.0（2026-02-12）  
@@ -247,3 +260,7 @@ LEGATO_reproduction_20260212/
 
 **恭喜！你现在已经掌握了 LEGATO 复现的核心流程。**  
 如有任何问题，请参考本文档或联系作者。
+=======
+# LEGATO-reproduce-decoder-only
+Reproduction of LEGATO (Large-scale End-to-end Generalizable Approach to Typeset OMR). Includes bug fixes, a simplified inference script, and a full environment/reproduction evidence pack. Decoder part verified – generates ABC notation. (Vision encoder excluded due to network constraints, can be skipped for core validation.)
+>>>>>>> b9d0202240cb62d2859773a00ed99551089c85f3
