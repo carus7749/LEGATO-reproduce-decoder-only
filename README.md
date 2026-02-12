@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <div align="center">
 
 # LEGATO Reproduction – Decoder Only
@@ -11,6 +10,7 @@
 [![GitHub last commit](https://img.shields.io/github/last-commit/carus7749/LEGATO-reproduce-decoder-only)](https://github.com/carus7749/LEGATO-reproduce-decoder-only/commits/main)
 
 </div>
+<<<<<<< HEAD
 # LEGATO 复现使用指南（简化推理版）
 
 **版本**：v1.0（2026-02-12）  
