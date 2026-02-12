@@ -1,0 +1,18 @@
+# 大模型权重文件
+*.safetensors
+*.bin
+*.pt
+*.pth
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 系统文件
+Thumbs.db
+.DS_Store
+
+# 环境文件夹（如果放在本地）
+environment/  # 环境导出文件可以保留，但权重文件必须排除

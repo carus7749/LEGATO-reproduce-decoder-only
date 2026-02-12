@@ -1,0 +1,11 @@
+X:1
+T:Test
+M:4/4
+L:1/8
+K:C
+ |$
+V:1 treble
+V:1
+ GA G2 BGAB | c G2 G A4 | G G2 A B2 c2 | d G2 F G4 | GA G2 BGAB | %5
+ c G2 G A4 |$ G G2 A B2 c2 | d G2 F G4 | G G2 A B2 c2 | d G2 F G4 | %10
+ G G2 A
