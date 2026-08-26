@@ -5,7 +5,7 @@
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3120/)
 [![PyTorch 2.4.1](https://img.shields.io/badge/PyTorch-2.4.1-%23EE4C2C.svg?logo=pytorch)](https://pytorch.org/)
 [![Transformers](https://img.shields.io/badge/🤗_Transformers-4.46.3-yellow)](https://huggingface.co/docs/transformers/index)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/carus7749/LEGATO-reproduce-decoder-only?style=social)](https://github.com/carus7749/LEGATO-reproduce-decoder-only/stargazers)
 [![GitHub last commit](https://img.shields.io/github/last-commit/carus7749/LEGATO-reproduce-decoder-only)](https://github.com/carus7749/LEGATO-reproduce-decoder-only/commits/main)
 
@@ -111,7 +111,7 @@ huggingface-cli download guangyangmusic/legato --local-dir ./legato-model
 
 ### 4.2 视觉编码器（Llama-3.2-11B-Vision）—— **当前跳过**
 完整 OMR 需要加载该编码器，但由于其体积大（20-30GB）且服务器网络受限，本指南**临时跳过**。  
-解码器推理不受影响，仅 MISSING 警告可忽略。
+当前流程仅验证解码器权重加载与 ABC 自回归生成；由于未加载视觉编码器，不能用于评估端到端 OMR 或识别准确率。
 
 如需完整复现，请参考第 6 节。
 
@@ -170,7 +170,7 @@ V:1
 |------|------|----------|
 | `conda: command not found` | conda 未初始化 | 执行 `source ~/miniconda3/bin/activate legato` 或重启 shell |
 | `No module named 'torch'` | 环境未激活或依赖未安装 | 确认在 `legato` 环境中，并执行 `pip install torch` |
-| `LegatoModel ... MISSING` | 视觉编码器未加载 | **可忽略**，不影响简化推理 |
+| `LegatoModel ... MISSING` | 视觉编码器未加载 | 在 decoder-only 测试中可忽略；不适用于端到端 OMR |
 | `OSError: ... config.json` | 模型路径错误 | 修改 `test_generate.py` 中的 `model_path` 变量 |
 
 ---
