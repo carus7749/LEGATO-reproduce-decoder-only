@@ -212,11 +212,13 @@ PYTHONPATH=. python scripts/inference.py \
 
 ## 7. 附录
 
-### 7.1 环境导出文件
-本证据包的 `environment/` 目录包含两份精确的环境导出文件：
-- `conda_env_export.yaml`：conda 环境完整配置（无版本号冲突）
-- `pip_freeze.txt`：pip 安装的所有包及其精确版本
-
+### 7.1 依赖文件
+本仓库提供两种环境重建方式：
+- `requirements.txt`：核心 Python 依赖，适合使用 pip 安装
+- `environment/conda_env_export.yaml`：已验证环境的完整 Conda 配置
+使用 pip 安装：
+```bash
+pip install -r requirements.txt
 **重建环境**：
 ```bash
 conda env create -f conda_env_export.yaml
@@ -239,12 +241,11 @@ LEGATO_reproduction_20260212/
 ├── config/                      # 主模型配置文件
 │   └── config.json
 ├── test_data/                   # 测试图片（simple.png）
-├── outputs/                     # 运行结果（日志 + ABC）
-│   ├── inference_log.txt
+├── requirements.txt
+├── outputs/
 │   └── generated_abc.txt
-├── environment/                 # 环境导出文件
-│   ├── conda_env_export.yaml
-│   └── pip_freeze.txt
+├── environment/
+│   └── conda_env_export.yaml
 └── scripts/                     # 一键复现脚本
     ├── fix_modeling.py
     ├── setup_env.sh
