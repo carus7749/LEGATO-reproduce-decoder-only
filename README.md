@@ -5,7 +5,7 @@
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3120/)
 [![PyTorch 2.4.1](https://img.shields.io/badge/PyTorch-2.4.1-%23EE4C2C.svg?logo=pytorch)](https://pytorch.org/)
 [![Transformers](https://img.shields.io/badge/🤗_Transformers-4.46.3-yellow)](https://huggingface.co/docs/transformers/index)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE.md)
 [![GitHub stars](https://img.shields.io/github/stars/carus7749/LEGATO-reproduce-decoder-only?style=social)](https://github.com/carus7749/LEGATO-reproduce-decoder-only/stargazers)
 [![GitHub last commit](https://img.shields.io/github/last-commit/carus7749/LEGATO-reproduce-decoder-only)](https://github.com/carus7749/LEGATO-reproduce-decoder-only/commits/main)
 
@@ -253,10 +253,4 @@ LEGATO_reproduction_20260212/
 
 ### 7.3 致谢
 感谢 LEGATO 论文作者提供开源代码，本复现工作基于官方仓库完成。  
-所有修复记录已反馈至项目 Issues。
-
----
-
-**恭喜！你现在已经掌握了 LEGATO 复现的核心流程。**  
-如有任何问题，请参考本文档或联系作者。
 
