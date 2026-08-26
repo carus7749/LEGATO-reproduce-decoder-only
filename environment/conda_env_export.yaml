@@ -111,4 +111,3 @@ dependencies:
       - urllib3==2.6.3
       - xxhash==3.6.0
       - yarl==1.22.0
-prefix: /home/yitian_test/miniconda3/envs/legato
