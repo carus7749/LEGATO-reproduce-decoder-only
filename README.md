@@ -213,20 +213,23 @@ PYTHONPATH=. python scripts/inference.py \
 ## 7. 附录
 
 ### 7.1 依赖文件
+
 本仓库提供两种环境重建方式：
+
 - `requirements.txt`：核心 Python 依赖，适合使用 pip 安装
 - `environment/conda_env_export.yaml`：已验证环境的完整 Conda 配置
+
 使用 pip 安装：
+
 ```bash
 pip install -r requirements.txt
-**重建环境**：
-```bash
-conda env create -f conda_env_export.yaml
-conda activate legato
 ```
-或使用 `pip` 安装依赖：
+
+或使用 Conda 重建环境：
+
 ```bash
-pip install -r pip_freeze.txt
+conda env create -f environment/conda_env_export.yaml
+conda activate legato
 ```
 
 ### 7.2 文件结构说明
