@@ -11,11 +11,11 @@
 
 </div>
 
+This repository documents a lightweight reproduction and debugging workflow based on [LEGATO](https://github.com/guang-yng/legato), an end-to-end optical music recognition model.
 
-**版本**：v1.0（2026-02-12）  
-**作者**：carus7749  
-**目标**：在服务器或个人电脑上快速复现 LEGATO 核心解码器推理流程，验证环境、代码与主模型加载，输出 ABC 乐谱。  
-**完整 OMR 复现**需额外下载视觉编码器，本指南已说明具体步骤。
+The project focuses on fixing implementation issues and validating decoder-only ABC notation generation under limited compute and storage resources.
+
+> **Scope:** This is not a full image-to-ABC OMR reproduction. The visual encoder is excluded, so the current output validates decoder-side model loading and autoregressive ABC generation rather than optical music recognition accuracy.
 
 ---
 
@@ -259,5 +259,4 @@ LEGATO_reproduction_20260212/
 
 **恭喜！你现在已经掌握了 LEGATO 复现的核心流程。**  
 如有任何问题，请参考本文档或联系作者。
-=======
 
