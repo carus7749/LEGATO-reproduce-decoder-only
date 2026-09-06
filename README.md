@@ -1,260 +1,400 @@
 <div align="center">
 
-# LEGATO Reproduction – Decoder Only
+# LEGATO Optical Music Recognition — Reproduction & Debugging
 
-[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3120/)
-[![PyTorch 2.4.1](https://img.shields.io/badge/PyTorch-2.4.1-%23EE4C2C.svg?logo=pytorch)](https://pytorch.org/)
-[![Transformers](https://img.shields.io/badge/🤗_Transformers-4.46.3-yellow)](https://huggingface.co/docs/transformers/index)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/carus7749/LEGATO-reproduce-decoder-only?style=social)](https://github.com/carus7749/LEGATO-reproduce-decoder-only/stargazers)
-[![GitHub last commit](https://img.shields.io/github/last-commit/carus7749/LEGATO-reproduce-decoder-only)](https://github.com/carus7749/LEGATO-reproduce-decoder-only/commits/main)
+![Python](https://img.shields.io/badge/Python-3.12-blue)
+![PyTorch](https://img.shields.io/badge/PyTorch-2.4.1-orange)
+![Transformers](https://img.shields.io/badge/HuggingFace-Transformers-yellow)
+![Status](https://img.shields.io/badge/Status-End--to--End%20Inference-success)
+![License](https://img.shields.io/badge/License-MIT-green)
+
+**Reproduction and debugging of an open-source multimodal Optical Music Recognition pipeline**
 
 </div>
 
-This repository documents a lightweight reproduction and debugging workflow based on [LEGATO](https://github.com/guang-yng/legato), an end-to-end optical music recognition model.
+---
 
-The project focuses on fixing implementation issues and validating decoder-only ABC notation generation under limited compute and storage resources.
+## Overview
 
-> **Scope:** This is not a full image-to-ABC OMR reproduction. The visual encoder is excluded, so the current output validates decoder-side model loading and autoregressive ABC generation rather than optical music recognition accuracy.
+This repository documents my reproduction and debugging of [LEGATO](https://github.com/guang-yng/legato), an open-source end-to-end Optical Music Recognition (OMR) model that converts score images into symbolic ABC notation.
+
+The project progressed from a **decoder-only validation workflow** under constrained server connectivity to a complete **score-image → ABC inference pipeline** after deploying the vision backbone and resolving multiple implementation and multimodal compatibility issues.
+
+### Final Status
+
+- ✅ LEGATO decoder and main-model loading validated
+- ✅ ~23 GB Llama-3.2-11B-Vision backbone deployed to the remote Linux server
+- ✅ Processor, tensor-conversion, kwargs, and generation compatibility issues resolved
+- ✅ End-to-end score-image → ABC inference completed
+- ✅ Reproducible environment, scripts, logs, test data, and outputs packaged
+
+> **Scope note:** This project reproduces and debugs the original LEGATO implementation. I did **not** develop the LEGATO architecture itself. The current repository demonstrates successful end-to-end inference; it does not claim reproduction of the paper's benchmark OMR accuracy.
 
 ---
 
-## 1. 项目概述
+## My Contribution
 
-LEGATO 是一个端到端光学音乐识别（OMR）模型，架构如下：
+My work focused on reproducing the open-source system and making the inference pipeline operational:
 
-```
-乐谱图像 → [Llama 视觉编码器] → 图像特征 → [LEGATO 解码器] → ABC 记谱法
-                ↑                           ↑
-            （需单独下载）              （主模型，本包已配置）
-```
-
-
-**本指南旨在跳过视觉编码器**，直接测试解码器部分，验证：
-- Python 环境与依赖是否正确安装
-- 修复后的 LEGATO 代码能否成功加载主模型权重
-- 模型能否正常生成文本（ABC 格式）
-
-**预期输出**：一段 ABC 乐谱文本（音符随机，但格式正确）。
+- configured the remote Linux environment with Conda, PyTorch, and Hugging Face Transformers;
+- diagnosed and fixed three implementation issues in `modeling_legato.py`;
+- developed a decoder-only validation workflow when the vision backbone could not initially be downloaded to the server;
+- downloaded the ~23 GB Llama-3.2-11B-Vision model locally with resumable downloads and transferred it to the server via `scp`;
+- resolved processor initialization, NumPy-to-Tensor conversion, missing-kwargs, and unsupported-generation-argument errors;
+- completed end-to-end **score image → ABC notation** inference;
+- packaged repaired code, environment specifications, scripts, logs, test inputs, outputs, and documentation for reproducibility.
 
 ---
 
-## 2. 环境准备
+## Architecture
 
-### 2.1 硬件与操作系统
-- **推荐**：Linux (Ubuntu 20.04+) 或 WSL2，至少 16GB 内存，GPU（可选但推荐）
-- **已验证环境**：Ubuntu 20.04.5 LTS, CUDA 11.8, 12GB+ GPU
+LEGATO follows a multimodal encoder-decoder workflow:
 
-### 2.2 一键环境安装脚本
-本证据包提供了自动化脚本 `scripts/setup_env.sh`，它会：
-- 安装 Miniconda（如未安装）
-- 创建 Python 3.12 的 conda 环境 `legato`
-- 安装核心依赖（PyTorch 2.4.1, Transformers, Accelerate, Pillow, HuggingFace Hub, Datasets）
-
-**执行命令**：
-```bash
-cd /path/to/LEGATO_reproduction_20260212
-bash scripts/setup_env.sh
+```text
+Score Image
+    ↓
+Llama-3.2-11B-Vision
+    ↓
+Visual Features
+    ↓
+LEGATO Decoder
+    ↓
+Autoregressive Generation
+    ↓
+ABC Notation
 ```
 
-> **注意**：脚本执行后会激活 `legato` 环境，若未自动激活，请手动运行：
-> ```bash
-> source ~/miniconda3/bin/activate legato
-> ```
+The reproduction was completed incrementally so that failures in model loading, vision processing, and generation could be isolated and debugged separately.
 
-### 2.3 手动安装（备选）
-如需手动安装，请依次执行：
-```bash
-conda create -n legato python=3.12 -y
-conda activate legato
-pip install torch==2.4.1 transformers==4.46.3 accelerate==1.0.1 pillow==10.0.0 huggingface_hub datasets
+---
+
+## Reproduction Journey
+
+```text
+Original LEGATO repository
+        ↓
+Environment setup
+        ↓
+Implementation debugging
+        ↓
+Vision model unavailable on remote server
+        ↓
+Decoder-only validation
+        ↓
+Local download of ~23 GB vision backbone
+        ↓
+SCP transfer to remote Linux server
+        ↓
+Processor / tensor / kwargs debugging
+        ↓
+Generation compatibility debugging
+        ↓
+Score image → LEGATO → ABC notation
+        ↓
+End-to-end inference completed
 ```
 
 ---
 
-## 3. 代码获取与修复
+# Stage 1 — Decoder-Only Validation
 
-### 3.1 原始代码
-LEGATO 官方代码仓库：  
-`https://github.com/guang-yng/legato`
+## Environment
 
-**本证据包已包含修复后的核心文件**，位于 `code/` 目录下：
-- `modeling_legato.py`（模型定义，已修复）
-- `inference.py`（原始推理脚本，已添加 `load_pretrained_encoder=False`）
-- `test_generate.py`（简化测试脚本，完全跳过视觉编码器和处理器）
-**因官方 processor 有 bug（已报告），简化测试绕过此模块**
+The first stage was validated on:
 
-### 3.2 修复说明（重要）
-原始代码存在三处关键 Bug，修复详情如下：
+- Ubuntu 20.04
+- Python 3.12
+- PyTorch 2.4.1
+- Transformers 4.46.3
+- CUDA-enabled GPU environment
 
-| 问题 | 位置 | 修复方法 |
-|------|------|----------|
-| **命名不一致** | `modeling_legato.py` __init__ | 将 `self.model.vision_model` 改为 `self.vision_model`，统一属性名 |
-| **缺少 `else` 分支** | `modeling_legato.py` __init__ | 添加 `else: self.vision_model = None`，避免属性未定义 |
-| **`from_pretrained` 冲突检查** | `modeling_legato.py` from_pretrained | 移除对 `load_pretrained_encoder=False` 的限制，允许跳过视觉编码器加载 |
+The repository provides:
 
-**修复脚本** `scripts/fix_modeling.py` 可一键应用所有修复（若从官方代码重新开始）。
+- `requirements.txt`
+- `environment/conda_env_export.yaml`
+- `scripts/setup_env.sh`
+
+for environment reconstruction.
 
 ---
 
-## 4. 模型准备
+## Initial Implementation Fixes
 
-### 4.1 主模型（解码器）
-本包已提供 LEGATO 主模型的配置文件 `config/config.json`，模型权重文件（`model.safetensors`，约 429MB）需自行从 Hugging Face 下载：
+Three issues were identified in `modeling_legato.py`:
 
-```bash
-huggingface-cli login  # 使用你的 token
-huggingface-cli download guangyangmusic/legato --local-dir ./legato-model
-```
+| Issue | Problem | Fix |
+|---|---|---|
+| Vision-model attribute naming | `self.model.vision_model` was inconsistent with the class structure | Changed to `self.vision_model` |
+| Missing fallback branch | `self.vision_model` could remain undefined when the encoder was skipped | Added `else: self.vision_model = None` |
+| Encoder-loading restriction | `from_pretrained` prevented `load_pretrained_encoder=False` | Removed the conflicting restriction |
 
-**已上传服务器**：本证据包测试时使用的模型路径为 `~/legato-model`，包含所有必需文件（`config.json`, `tokenizer.json`, `model.safetensors` 等）。
-
-### 4.2 视觉编码器（Llama-3.2-11B-Vision）—— **当前跳过**
-完整 OMR 需要加载该编码器，但由于其体积大（20-30GB）且服务器网络受限，本指南**临时跳过**。  
-当前流程仅验证解码器权重加载与 ABC 自回归生成；由于未加载视觉编码器，不能用于评估端到端 OMR 或识别准确率。
-
-如需完整复现，请参考第 6 节。
+These changes allowed the main LEGATO model to load without requiring the vision backbone.
 
 ---
 
-## 5. 运行推理（简化版）
+## Why Decoder-Only First?
 
-### 5.1 一键推理脚本
-在环境已激活、代码和模型就绪的前提下，执行：
+The remote server could not directly access Hugging Face, while the Llama-3.2-11B-Vision backbone was approximately 23 GB.
 
-```bash
-cd /path/to/legato
-bash /path/to/LEGATO_reproduction_20260212/scripts/run_inference.sh
+Instead of blocking the reproduction at this point, I isolated the decoder-side pipeline and created `test_generate.py` to:
+
+1. load the LEGATO tokenizer;
+2. load the repaired main model;
+3. bypass the visual encoder;
+4. run autoregressive generation;
+5. verify that ABC-formatted text could be produced.
+
+This stage was a **sanity check for model loading and decoder generation**, not an evaluation of OMR recognition quality.
+
+---
+
+# Stage 2 — Full Vision Model Deployment
+
+## Challenge
+
+Full LEGATO inference requires the Llama-3.2-11B-Vision backbone, but the remote server could not directly download the model from Hugging Face.
+
+## Solution
+
+The model was downloaded in a local Windows environment using Hugging Face tools with resumable downloads.
+
+During unstable network transfers, the download was resumed until all five `.safetensors` shards were obtained.
+
+The complete model was then transferred to the server:
+
+```text
+Local machine
+      ↓
+Llama-3.2-11B-Vision (~23 GB)
+      ↓
+scp
+      ↓
+Remote Linux server
+      ↓
+~/llama-vision/
 ```
 
-该脚本将：
-- 进入 `~/legato` 目录（请根据实际情况修改路径）
-- 激活 `legato` 环境
-- 运行 `test_generate.py` 并输出结果
+File sizes were checked after transfer to verify that the model shards were complete.
 
-### 5.2 手动运行
+---
+
+# Stage 3 — End-to-End Inference Debugging
+
+Running the original `inference.py` exposed additional compatibility issues.
+
+## Issue 1 — Processor Initialization
+
+```text
+TypeError:
+MllamaProcessor.__init__()
+missing 1 required positional argument: 'tokenizer'
+```
+
+**Cause**
+
+`LegatoProcessor.__init__` did not explicitly pass the tokenizer required by the parent processor.
+
+**Fix**
+
+Updated the processor initialization to explicitly accept and forward the tokenizer.
+
+---
+
+## Issue 2 — NumPy / PyTorch Type Mismatch
+
+```text
+AttributeError:
+'numpy.ndarray' object has no attribute 'to'
+```
+
+**Cause**
+
+Some processor outputs were NumPy arrays, while the inference code attempted to call `.to(device)` directly.
+
+**Fix**
+
+Added type checking and converted NumPy arrays to PyTorch tensors before moving them to the target device.
+
+---
+
+## Issue 3 — Missing `common_kwargs`
+
+```text
+KeyError: 'common_kwargs'
+```
+
+**Cause**
+
+The merged kwargs dictionary did not always contain this key.
+
+**Fix**
+
+Replaced direct indexing with a safe default:
+
+```python
+kwargs.get("common_kwargs", {})
+```
+
+---
+
+## Issue 4 — Unsupported Generation Argument
+
+```text
+ValueError:
+The following model_kwargs are not used by the model:
+['use_model_defaults']
+```
+
+**Cause**
+
+The generation call included an argument not accepted by the loaded model.
+
+**Fix**
+
+Removed `use_model_defaults` from the generation call.
+
+---
+
+# Results
+
+After the vision backbone was deployed and the compatibility issues were resolved, the full inference command completed successfully:
+
 ```bash
 conda activate legato
 cd ~/legato
-PYTHONPATH=. python test_generate.py
+
+PYTHONPATH=. python scripts/inference.py \
+  --model_path ../legato-model \
+  --image_path test_images/simple.png
 ```
 
-### 5.3 预期输出
-控制台将显示类似以下内容：
+The model successfully:
 
+```text
+loaded the score image
+        ↓
+processed visual features
+        ↓
+loaded the LEGATO generation pipeline
+        ↓
+generated symbolic output
+        ↓
+saved JSON containing abc_transcription
 ```
-加载分词器...
-加载模型...
-LegatoModel LOAD REPORT ...（大量 MISSING 警告，可忽略）
-使用设备: cuda
-生成中...
 
-=== 生成结果 ===
-X:1
-T:Test
-M:4/4
-L:1/8
+Example generated ABC output:
+
+```abc
+AgAgA/B/G//2A/B/G/
+I:linebreak $
 K:C
- |$
 V:1 treble
 V:1
- x/ !slide!PMTue !slide!d2 x3/4 |$ !slide!d2 x3/4 |$ !slide!d2 x3/4 |$ !slide!d2 x3/4 | %5
- !slide!d2 x3/4 |$ !slide!d2 x3/4 |$ !slide!
+G2 g4 G2 d4 ...
 ```
 
-**成功标志**：出现 ABC 格式的文本块，说明模型加载成功、生成逻辑正常。
+The successful `abc_transcription` output demonstrates that the complete image-to-symbolic-notation inference path can run end to end.
 
-### 5.4 常见错误与解决
-
-| 错误 | 原因 | 解决方法 |
-|------|------|----------|
-| `conda: command not found` | conda 未初始化 | 执行 `source ~/miniconda3/bin/activate legato` 或重启 shell |
-| `No module named 'torch'` | 环境未激活或依赖未安装 | 确认在 `legato` 环境中，并执行 `pip install torch` |
-| `LegatoModel ... MISSING` | 视觉编码器未加载 | 在 decoder-only 测试中可忽略；不适用于端到端 OMR |
-| `OSError: ... config.json` | 模型路径错误 | 修改 `test_generate.py` 中的 `model_path` 变量 |
+> This result validates pipeline execution rather than benchmark recognition accuracy. Formal comparison against the paper using metrics such as TEDn or OMR-NED remains future work.
 
 ---
 
-## 6. 完整 OMR 复现（后续工作）
+# Repository Structure
 
-若需进行端到端的乐谱图像→ABC 识别，必须加载视觉编码器 Llama-3.2-11B-Vision。  
-步骤如下：
-
-### 6.1 下载视觉编码器
-确保服务器可访问 Hugging Face，执行：
-
-```bash
-huggingface-cli login
-huggingface-cli download meta-llama/Llama-3.2-11B-Vision --local-dir ~/llama-vision
+```text
+LEGATO-reproduction/
+├── README.md
+├── report.md
+├── code/
+│   ├── modeling_legato.py
+│   ├── inference.py
+│   └── test_generate.py
+├── config/
+│   └── config.json
+├── test_data/
+├── outputs/
+│   └── generated_abc.txt
+├── environment/
+│   └── conda_env_export.yaml
+├── requirements.txt
+└── scripts/
+    ├── fix_modeling.py
+    ├── setup_env.sh
+    └── run_inference.sh
 ```
-
-### 6.2 修改主模型配置
-编辑 `legato-model/config.json`，将：
-
-```json
-"encoder_pretrained_model_name_or_path": null
-```
-改为：
-```json
-"encoder_pretrained_model_name_or_path": "/path/to/llama-vision"
-```
-
-### 6.3 使用原始推理脚本
-```bash
-PYTHONPATH=. python scripts/inference.py \
-    --model_path ../legato-model \
-    --image_path your_score.png
-```
-
-**此时将不再出现 MISSING 警告，模型将利用真实视觉特征生成 ABC。**
 
 ---
 
-## 7. 附录
+# Setup
 
-### 7.1 依赖文件
-
-本仓库提供两种环境重建方式：
-
-- `requirements.txt`：核心 Python 依赖，适合使用 pip 安装
-- `environment/conda_env_export.yaml`：已验证环境的完整 Conda 配置
-
-使用 pip 安装：
+## Option 1 — pip
 
 ```bash
 pip install -r requirements.txt
 ```
 
-或使用 Conda 重建环境：
+## Option 2 — Conda
 
 ```bash
 conda env create -f environment/conda_env_export.yaml
 conda activate legato
 ```
 
-### 7.2 文件结构说明
-```
-LEGATO_reproduction_20260212/
-├── README.md                     # 本指南
-├── report.md                    # 向负责人汇报的总结
-├── code/                        # 修复后的核心代码
-│   ├── modeling_legato.py
-│   ├── inference.py
-│   └── test_generate.py
-├── config/                      # 主模型配置文件
-│   └── config.json
-├── test_data/                   # 测试图片（simple.png）
-├── requirements.txt
-├── outputs/
-│   └── generated_abc.txt
-├── environment/
-│   └── conda_env_export.yaml
-└── scripts/                     # 一键复现脚本
-    ├── fix_modeling.py
-    ├── setup_env.sh
-    └── run_inference.sh
+The repository also includes:
+
+```bash
+bash scripts/setup_env.sh
 ```
 
-### 7.3 致谢
-感谢 LEGATO 论文作者提供开源代码，本复现工作基于官方仓库完成。  
+for automated environment setup.
 
+---
+
+# Model Preparation
+
+The LEGATO main model can be obtained from Hugging Face:
+
+```bash
+huggingface-cli login
+
+huggingface-cli download \
+  guangyangmusic/legato \
+  --local-dir ./legato-model
+```
+
+Full OMR inference additionally requires the Llama-3.2-11B-Vision backbone.
+
+Because the vision model is large and may be difficult to download directly from restricted servers, a practical workflow is:
+
+```text
+Download locally
+      ↓
+Verify model shards
+      ↓
+Transfer to server
+      ↓
+Configure local model path
+      ↓
+Run inference
+```
+
+---
+
+# Limitations & Future Work
+
+The current reproduction demonstrates successful end-to-end inference, but several extensions remain:
+
+- evaluate recognition quality on a public benchmark using **TEDn / OMR-NED**;
+- test additional real-world score images and analyze recognition errors;
+- investigate remaining model-loading `MISSING` warnings caused by structural differences between LEGATO and the vision backbone;
+- tune generation parameters such as `temperature` and `repetition_penalty`;
+- explore fine-tuning on symbolic-music datasets such as PDMX-Synth;
+- optionally expose the inference pipeline through a lightweight Gradio or FastAPI interface.
+
+---
+
+# Acknowledgements
+
+This project is based on the original open-source [LEGATO repository](https://github.com/guang-yng/legato).
+
+All credit for the original LEGATO architecture and research belongs to its authors. This repository documents my independent reproduction, debugging, deployment, and inference-validation work.
